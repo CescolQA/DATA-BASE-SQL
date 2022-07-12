@@ -1,0 +1,133 @@
+INSERT VALUES
+
+INSERT INTO staff
+(FIRST_NAME,LAST_NAME, EMAIL, ADDRESS_ID, USERNAME, PASSWORD)
+VALUES
+('CESAR', 'COLON','cescolon@gmail.com','1','CESCOL','CES123');
+
+
+
+INNER JOINS
+
+SELECT A.LOG_ID, A.STAFF_ID, D.FIRST_NAME, B.FIELD, C.BUSSINESSRULE, C.LOGMESSAGE
+FROM VALIDATIONLOG A
+INNER JOIN STAFF_FORM B
+ON A.FIELD_ID = B.FIELD_ID
+INNER JOIN BUSINESS_RULES C
+ON A.BR_ID = C.BR_ID
+INNER JOIN STAFF D
+ON A.STAFF_ID = D.STAFF_ID
+ORDER BY A.LOG_ID ASC;
+
+
+
+CREATE TABLE business_rules (
+br_id int NOT NULL AUTO_INCREMENT,
+bussinessrule varchar(40) NOT NULL,
+logmessage varchar(255) NOT NULL,
+br_trigger varchar(255) NOT NULL,
+br_workflow varchar(20) NOT NULL,
+PRIMARY KEY (br_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+INSERT INTO BUSINESS_RULES
+(bussinessrule, logmessage, br_trigger, br_workflow)
+VALUES
+('BR 1- Campo Válido','Este campo está correctamente rellenado✔','When the field is valid','INSERT'),
+('BR 2- Campo Requerido*','Este campo no puede estar vacío. Es requerido.','When the field is null','INSERT'),
+('BR 3- Formato Name No Válido','Este campo no puede contener valores numéricos ni caracteres especiales.','When the field is not name','INSERT'),
+('BR 4- Formato Email No Válido','Este Email solo acepta formato @gmail.com.','When the email has no format','INSERT'),
+('BR 5- Usuario Ya Existente','Este Usuario ya está en uso.','When the User is existing','INSERT'),
+('BR 6- Contraseña No Válida','La contraseña debe contener entre 5 a 20 caracteres.','When the PW is not in range 5-20','INSERT'),
+('BR 7- Contraseña Con Spacios','La contraseña no puede contener espacios vacíos.','When the PW has not spaces','INSERT'),
+('BR 8- Contraseña Sin Num','La contraseña debe contener mínimo 1 valor numérico.','When the PW has no num','INSERT'),
+('BR 9- Contraseña Sin Letras','La contraseña debe contener mínimo letra.','When the PW has no letters','INSERT');
+
+
+
+CREATE TABLE staff_form (
+FIELD_ID int NOT NULL AUTO_INCREMENT,
+FIELD varchar(20) NOT NULL,
+PRIMARY KEY (FIELD_ID)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+INSERT INTO STAFF_FORM
+(FIELD)
+VALUES
+('FIRST NAME'), -- FIELD_ID 1
+('LAST NAME'), -- FIELD_ID 2
+('EMAIL'), -- FIELD_ID 3
+('ADDRESS'), -- FIELD_ID 4
+('USERNAME'), -- FIELD_ID 5
+('PASSWORD'); -- FIELD_ID 6
+
+
+
+CREATE TABLE validationlog (
+LOG_ID int NOT NULL AUTO_INCREMENT,
+STAFF_ID tinyint unsigned DEFAULT NULL,
+FIELD_ID int DEFAULT NULL,
+BR_ID int DEFAULT NULL,
+UpdatedDtm timestamp NULL DEFAULT NULL,
+PRIMARY KEY (LOG_ID),
+KEY STAFF_ID (STAFF_ID),
+KEY FIELD_ID (FIELD_ID),
+KEY BR_ID (BR_ID),
+CONSTRAINT validationlog_ibfk_1 FOREIGN KEY (STAFF_ID) REFERENCES staff (staff_id),
+CONSTRAINT validationlog_ibfk_2 FOREIGN KEY (FIELD_ID) REFERENCES staff_form (FIELD_ID),
+CONSTRAINT validationlog_ibfk_3 FOREIGN KEY (BR_ID) REFERENCES business_rules (br_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+
+
+TRIGGERS
+
+
+
+delimiter //
+CREATE DEFINER=root@localhost TRIGGER BR6789_AI AFTER INSERT ON staff FOR EACH ROW BEGIN
+IF -- BR2: Contraseña Null
+(NEW.password IS NULL OR NEW.password = '')
+THEN
+INSERT INTO VALIDATIONLOG
+(STAFF_ID, FIELD_ID, BR_ID)
+VALUES
+(new.STAFF_ID,6,2);
+ELSEIF -- BR6: Contraseña NO está entre 5 a 20 caracteres
+(character_length(NEW.password) NOT BETWEEN 4 AND 20)
+THEN
+INSERT INTO VALIDATIONLOG
+(STAFF_ID, FIELD_ID, BR_ID)
+VALUES
+(new.STAFF_ID,6,6);
+ELSEIF -- BR7: Contraseña contiene espacios entre palabras
+(NEW.password LIKE '% %')
+THEN
+INSERT INTO VALIDATIONLOG
+(STAFF_ID, FIELD_ID, BR_ID)
+VALUES
+(new.STAFF_ID,6,7);
+ELSEIF -- BR8: Contraseña DEBE contener mínimo (1) valor numérico
+(NEW.password NOT LIKE '%0%'
+OR NEW.password NOT LIKE '%1%'
+OR NEW.password NOT LIKE '%2%'
+OR NEW.password NOT LIKE '%3%'
+OR NEW.password NOT LIKE '%4%'
+OR NEW.password NOT LIKE '%5%'
+OR NEW.password NOT LIKE '%6%'
+OR NEW.password NOT LIKE '%7%'
+OR NEW.password NOT LIKE '%8%'
+OR NEW.password NOT LIKE '%9%')
+THEN
+INSERT INTO VALIDATIONLOG
+(STAFF_ID, FIELD_ID, BR_ID)
+VALUES
+(new.STAFF_ID,6,8);	
+ELSE
+INSERT INTO VALIDATIONLOG
+(STAFF_ID, FIELD_ID, BR_ID)
+VALUES
+(new.STAFF_ID,6,1);
+END IF;
+END; //
+delimiter ;
