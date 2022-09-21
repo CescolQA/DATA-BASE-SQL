@@ -8,4 +8,4 @@
       ✔ Reporte de Defectos (Re- Testing / Root Cause)
         ✔ Manejo de MySQL para la base de datos SQL
 
-<< En las archivos adjuntos está desglosado la US con todo el desarrollo del proceso QA. Check it out! >>
+<< En los archivos adjuntos está desglosado la US con todo el desarrollo del proceso QA. Check it out! >>
